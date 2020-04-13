@@ -86,26 +86,31 @@ window.onload = function init()
 	
 	You can add text in HTML like this : <p id="camera-text">Camera location:</p>
 	*/
-    
+
 	//event listeners for switching between looking at cube/looking at -z
 
 
 
 
 
-	//todo: add event listeners for conrtolling the camera abd cube, and switching between options.
+	//todo: add event listeners for controlling the camera abd cube, and switching between options.
 	//1. conrtolling the position of the camera and orientation of the cube
 	//2. switching between looking at the cube and at the default direction
 	//3. switching between camera projections
 	
 	//examples: 
-	//document.getElementById( "look-at-cube" ).onclick = function (e) {};
+	
 	//document.getElementById( "use-projection" ).onchange = function (e) {};
 	
 	//hint: inside an event hander function, "this" refers to the HTML element of the event. You can use this.textContent="..." to change the text of a button.
     //hint: inside the event handler function of a checkbox, this.checked is the boolean checked state of the checkbox.
     
-	
+	document.getElementById( "look-at-cube" ).onclick = function (e) {
+        cameraLookingAtCube = true;
+    };
+    document.getElementById( "default-direction" ).onclick = function (e) {
+        cameraLookingAtCube = false;
+    };
     
 	
 	
@@ -124,7 +129,8 @@ window.onload = function init()
 	
 	//todo: show the camera position and direction(whether it's looking at the cube) in text. 
 	//hint: You can set the text like this:
-	//cameraText = document.getElementById("camera-text"); cameraText.textContent="..." 
+    cameraText = document.getElementById("camera-text"); 
+    cameraText.textContent="Camera Position: " + cameraPosition; 
 	
 
     render();
