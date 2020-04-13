@@ -107,9 +107,11 @@ window.onload = function init()
     
 	document.getElementById( "look-at-cube" ).onclick = function (e) {
         cameraLookingAtCube = true;
+        render();
     };
     document.getElementById( "default-direction" ).onclick = function (e) {
         cameraLookingAtCube = false;
+        render();
     };
     
 	
@@ -124,14 +126,106 @@ window.onload = function init()
 	//example: document.addEventListener("keydown",function(e){ ... });
 	//hint: you can use conditions like if(e.key=="a") or if(e.keyCode==37). You can look up key codes, or use console.log(e.keyCode) in this listener to see what's the code of a key you press.
 	//hint: after changing the cube or camera's frame, call render() again.
-	
-	
+	document.addEventListener("keydown", function(e) {
+        switch (e.key) {
+            case 'q':
+                if (cameraPosition[1] < 1) {
+                    cameraPosition[1] += 0.05;
+                    cameraPosition[1] = Math.round(cameraPosition[1] * 100) / 100;
+                    render();
+                } else {
+                    alert("too far");
+                }
+                break;
+            case 'e':
+                if (cameraPosition[1] > -1 ) {
+                    cameraPosition[1] -= 0.05;
+                    cameraPosition[1] = Math.round(cameraPosition[1] * 100) / 100;
+                    render();
+                } else {
+                    alert("too far");
+                }
+                break;
+            case 'a':
+                if (cameraPosition[0] > -1) {
+                    cameraPosition[0] -= 0.05;
+                    cameraPosition[0] = Math.round(cameraPosition[0] * 100) / 100;
+                    render();
+                } else {
+                    alert("too far");
+                }
+                break;
+            case 'd':
+                if (cameraPosition[0] < 1) {
+                    cameraPosition[0] += 0.05;
+                    cameraPosition[0] = Math.round(cameraPosition[0] * 100) / 100;
+                    render();
+                } else {
+                    alert("too far");
+                }
+                break;
+            case 'w':
+                if (cameraPosition[2] < 1) {
+                    cameraPosition[2] += 0.05;
+                    cameraPosition[2] = Math.round(cameraPosition[2] * 100) / 100;
+                    render();
+                } else {
+                    alert("too far");
+                }
+                break;
+            case 's':
+                if (cameraPosition[2] > -1) {
+                    cameraPosition[2] -= 0.05;
+                    cameraPosition[2] = Math.round(cameraPosition[2] * 100) / 100;
+                    render();
+                } else {
+                    alert("too far");
+                }
+                break;
+            case "F5":
+                break;
+            case "ArrowLeft":
+                if (theta[0] == 0) {
+                    theta[0] = 355;
+                } else {
+                    theta[0] -= 5;
+                }
+                break;
+            case "ArrowRight":
+                if (theta[0] == 355) {
+                    theta[0] = 0;
+                } else {
+                    theta[0] += 5;
+                }
+                break;
+            case "ArrowDown":
+                if (theta[1] == 0) {
+                    theta[1] = 355;
+                } else {
+                    theta[1] -= 5;
+                }
+                break;
+            case "ArrowUp":
+                if (theta[1] == 355) {
+                    theta[1] = 0;
+                } else {
+                    theta[1] += 5;
+                }
+                break;
+            default:
+                console.log(e.key);
+                alert("Camera Controls:\nQ: up\nE: down\nA: left\nD: right\nW: forward\nS: back");
+                break;
+        }
+        cameraText.textContent="Camera Position: " + cameraPosition;
+    });
 	
 	//todo: show the camera position and direction(whether it's looking at the cube) in text. 
 	//hint: You can set the text like this:
     cameraText = document.getElementById("camera-text"); 
     cameraText.textContent="Camera Position: " + cameraPosition; 
-	
+
+    identityMatrix[0] = {};
 
     render();
 }
@@ -196,12 +290,26 @@ function render()
 	//todo: compute the model matrix here instead of in the shader
 	//modelMatrix=...
 	//hint: you can use rotateX, rotateY and rotateZ to get matrices and combine them.
-	
+
+    modelMatrix = mult( mult(rotateX(theta[0]), rotateY(theta[1])), rotateZ(theta[2]) );
+    
 	//todo: 
 	//1. compute the view matrix when the camera is pointing at the -z direction.
 	//hint: here the view matrix is the inverse of the camera matrix, which is a translation from the origin to the position of the camera(by default the camera is already looking towards the -z direction if you don't rotate it). Then combine the model and view matrices. There's a function translate( x, y, z ).
-	//2. add support for looking at the cube
-	//hint: there's a function lookAt( eye, at, up ). We want the camera (eye) to look at the center of the cube.
+    var cameraMatrix;
+    if (cameraLookingAtCube == false) {
+        cameraMatrix = translate(cameraPosition[0], cameraPosition[1], cameraPosition[2]);
+        viewMatrix = inverse4(cameraMatrix);
+        resultMatrix = mult(viewMatrix, modelMatrix);
+    }
+
+    //2. add support for looking at the cube
+    //hint: there's a function lookAt( eye, at, up ). We want the camera (eye) to look at the center of the cube.
+    if (cameraLookingAtCube == true) {
+        viewMatrix = lookAt( cameraPosition, origin, cameraUp);
+        resultMatrix = mult(modelMatrix, viewMatrix);
+    }
+
 	//3. add orthographic or perspective projection if it's enabled, and multiply the projection matrix with the model-view matrix.
 	//hint: there are functions perspective( fovy, aspect, near, far ) and ortho( left, right, bottom, top, near, far ).
 	
