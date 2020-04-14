@@ -36,6 +36,7 @@ var usePerspective=false;
 
 window.onload = function init()
 {
+    console.log("hello");
     canvas = document.getElementById("gl-canvas");
 
     gl = canvas.getContext('webgl2');
@@ -129,7 +130,7 @@ window.onload = function init()
 	document.addEventListener("keydown", function(e) {
         switch (e.key) {
             case 'q':
-                if (cameraPosition[1] < 1) {
+                if (cameraPosition[1] < 0.5) {
                     cameraPosition[1] += 0.05;
                     cameraPosition[1] = Math.round(cameraPosition[1] * 100) / 100;
                     render();
@@ -138,7 +139,7 @@ window.onload = function init()
                 }
                 break;
             case 'e':
-                if (cameraPosition[1] > -1 ) {
+                if (cameraPosition[1] > -0.5 ) {
                     cameraPosition[1] -= 0.05;
                     cameraPosition[1] = Math.round(cameraPosition[1] * 100) / 100;
                     render();
@@ -147,7 +148,7 @@ window.onload = function init()
                 }
                 break;
             case 'a':
-                if (cameraPosition[0] > -1) {
+                if (cameraPosition[0] > -0.5) {
                     cameraPosition[0] -= 0.05;
                     cameraPosition[0] = Math.round(cameraPosition[0] * 100) / 100;
                     render();
@@ -156,7 +157,7 @@ window.onload = function init()
                 }
                 break;
             case 'd':
-                if (cameraPosition[0] < 1) {
+                if (cameraPosition[0] < 0.5) {
                     cameraPosition[0] += 0.05;
                     cameraPosition[0] = Math.round(cameraPosition[0] * 100) / 100;
                     render();
@@ -165,8 +166,8 @@ window.onload = function init()
                 }
                 break;
             case 'w':
-                if (cameraPosition[2] < 1) {
-                    cameraPosition[2] += 0.05;
+                if (cameraPosition[2] > -1) {
+                    cameraPosition[2] -= 0.05;
                     cameraPosition[2] = Math.round(cameraPosition[2] * 100) / 100;
                     render();
                 } else {
@@ -174,8 +175,8 @@ window.onload = function init()
                 }
                 break;
             case 's':
-                if (cameraPosition[2] > -1) {
-                    cameraPosition[2] -= 0.05;
+                if (cameraPosition[2] < 1) {
+                    cameraPosition[2] += 0.05;
                     cameraPosition[2] = Math.round(cameraPosition[2] * 100) / 100;
                     render();
                 } else {
@@ -185,47 +186,45 @@ window.onload = function init()
             case "F5":
                 break;
             case "ArrowLeft":
-                if (theta[0] == 0) {
-                    theta[0] = 355;
+                if (theta[1] == 357) {
+                    theta[1] = 0;
                 } else {
-                    theta[0] -= 5;
+                    theta[1] += 3;
                 }
                 break;
             case "ArrowRight":
-                if (theta[0] == 355) {
-                    theta[0] = 0;
+                if (theta[1] == 0) {
+                    theta[1] = 357;
                 } else {
-                    theta[0] += 5;
+                    theta[1] -= 3;
                 }
                 break;
             case "ArrowDown":
-                if (theta[1] == 0) {
-                    theta[1] = 355;
+                if (theta[0] == 0) {
+                    theta[0] = 357;
                 } else {
-                    theta[1] -= 5;
+                    theta[0] -= 3;
                 }
                 break;
             case "ArrowUp":
-                if (theta[1] == 355) {
-                    theta[1] = 0;
+                if (theta[0] == 357) {
+                    theta[0] = 0;
                 } else {
-                    theta[1] += 5;
+                    theta[0] += 3;
                 }
                 break;
             default:
-                console.log(e.key);
                 alert("Camera Controls:\nQ: up\nE: down\nA: left\nD: right\nW: forward\nS: back");
                 break;
         }
         cameraText.textContent="Camera Position: " + cameraPosition;
+        render()
     });
 	
 	//todo: show the camera position and direction(whether it's looking at the cube) in text. 
 	//hint: You can set the text like this:
     cameraText = document.getElementById("camera-text"); 
     cameraText.textContent="Camera Position: " + cameraPosition; 
-
-    identityMatrix[0] = {};
 
     render();
 }
@@ -297,25 +296,34 @@ function render()
 	//1. compute the view matrix when the camera is pointing at the -z direction.
 	//hint: here the view matrix is the inverse of the camera matrix, which is a translation from the origin to the position of the camera(by default the camera is already looking towards the -z direction if you don't rotate it). Then combine the model and view matrices. There's a function translate( x, y, z ).
     var cameraMatrix;
+    var modelView;
     if (cameraLookingAtCube == false) {
-        cameraMatrix = translate(cameraPosition[0], cameraPosition[1], cameraPosition[2]);
-        viewMatrix = inverse4(cameraMatrix);
-        resultMatrix = mult(viewMatrix, modelMatrix);
+        /*cameraMatrix = translate(cameraPosition[0], cameraPosition[1], cameraPosition[2]);
+        viewMatrix = inverse4(cameraMatrix);*/
+        var newEye = vec3();
+        newEye[0] = cameraPosition[0];
+        newEye[1] = cameraPosition[1];
+        newEye[2] = cameraPosition[2] - 0.1;
+        viewMatrix = lookAt(newEye, cameraPosition, cameraUp);
+        modelView = mult(modelMatrix, viewMatrix);
     }
 
     //2. add support for looking at the cube
     //hint: there's a function lookAt( eye, at, up ). We want the camera (eye) to look at the center of the cube.
     if (cameraLookingAtCube == true) {
-        viewMatrix = lookAt( cameraPosition, origin, cameraUp);
-        resultMatrix = mult(modelMatrix, viewMatrix);
+        viewMatrix = inverse4(lookAt( origin, cameraPosition, cameraUp));
+        modelView = mult(modelMatrix, viewMatrix);
     }
 
 	//3. add orthographic or perspective projection if it's enabled, and multiply the projection matrix with the model-view matrix.
 	//hint: there are functions perspective( fovy, aspect, near, far ) and ortho( left, right, bottom, top, near, far ).
-	
+    resultMatrix = modelView;
+    //var projectionMatrix = perspective(90, 1, 1, -1);
+    //resultMatrix = mult(modelMatrix, projectionMatrix);
+    
 	//set the matrix uniform - flatten() already transposes into column-major order.
 	gl.uniformMatrix4fv(matrixLoc, false, flatten(resultMatrix));
 
     gl.drawArrays(gl.TRIANGLES, 0, numPositions);
-    requestAnimationFrame(render);
+    //requestAnimationFrame(render);
 }
